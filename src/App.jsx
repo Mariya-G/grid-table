@@ -92,6 +92,7 @@ const rows = [
 
 export default function App() {
   return (
+    <>
     <ThemeProvider theme={theme}>
       <Box sx={{ height: 400, width: "100%" }}>
         <DataGrid
@@ -118,5 +119,7 @@ export default function App() {
         />
       </Box>
     </ThemeProvider>
+    <
+    </>
   );
 }

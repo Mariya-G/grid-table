@@ -1,4 +1,5 @@
 import * as React from "react";
+import Material from "./Material";
 import Box from "@mui/material/Box";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
@@ -92,31 +93,34 @@ const rows = [
 
 export default function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <Box sx={{ height: 400, width: "100%" }}>
-        <DataGrid
-          slots={{
-            toolbar: GridToolbar,
-          }}
-          rows={rows}
-          columns={columns}
-          initialState={{
-            pagination: {
-              paginationModel: {
-                pageSize: 10,
+    <>
+      <ThemeProvider theme={theme}>
+        <Box sx={{ height: 400, width: "100%" }}>
+          <DataGrid
+            slots={{
+              toolbar: GridToolbar,
+            }}
+            rows={rows}
+            columns={columns}
+            initialState={{
+              pagination: {
+                paginationModel: {
+                  pageSize: 10,
+                },
               },
-            },
-            columns: {
-              columnVisibilityModel: {
-                id: false,
+              columns: {
+                columnVisibilityModel: {
+                  id: false,
+                },
               },
-            },
-          }}
-          pageSizeOptions={[5]}
-          checkboxSelection
-          disableRowSelectionOnClick
-        />
-      </Box>
-    </ThemeProvider>
+            }}
+            pageSizeOptions={[5]}
+            checkboxSelection
+            disableRowSelectionOnClick
+          />
+        </Box>
+      </ThemeProvider>
+      <Material />
+    </>
   );
 }

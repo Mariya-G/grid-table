@@ -1,12 +1,11 @@
-import { useMemo } from "react";
+/* eslint-disable react/prop-types */
+import { useMemo, useState, useEffect } from "react";
 
 import {
   MaterialReactTable,
   useMaterialReactTable,
   createMRTColumnHelper,
   MRT_ExpandAllButton,
-  // MRT_ShowHideColumnsButton,
-  // MRT_ToggleFullScreenButton,
 } from "material-react-table";
 import { Box, Button, Stack } from "@mui/material";
 
@@ -14,7 +13,7 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import { mkConfig, generateCsv, download } from "export-to-csv";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import { data } from "./makeData";
+import { data, citiesList } from "./makeData";
 import { MRT_Localization_RU } from "material-react-table/locales/ru";
 import { createTheme, ThemeProvider, useTheme } from "@mui/material";
 import { ruRU } from "@mui/material/locale";
@@ -28,6 +27,40 @@ const csvConfig = mkConfig({
 });
 
 const MaterialTable = () => {
+  // const rowVirtualizerInstanceRef = useRef(null);
+  // const [data1, setData1] = useState(data);
+  const [sorting, setSorting] = useState(() => {
+    // Загружаем состояние сортировки из sessionStorage
+    const storedSorting = sessionStorage.getItem("mrt_sorting_table_1");
+    return storedSorting ? JSON.parse(storedSorting) : [];
+  });
+  const [globalFilter, setGlobalFilter] = useState(() => {
+    return sessionStorage.getItem("globalFilter") || "";
+  });
+
+  // Сохранение состояния сортировки в sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem("mrt_sorting_table_1", JSON.stringify(sorting));
+  }, [sorting]);
+
+  //сброс данных в хранилище
+  const resetState = () => {
+    sessionStorage.removeItem("mrt_sorting_table_1");
+    sessionStorage.removeItem("globalFilter");
+    setSorting([]);
+    setGlobalFilter("");
+    // window.location.reload();
+  };
+
+  // Сохраняем состояние глобального фильтра в sessionStorage при его изменении
+  useEffect(() => {
+    sessionStorage.setItem("globalFilter", globalFilter);
+  }, [globalFilter]);
+
+  const handleGlobalFilterChange = (filterValue) => {
+    setGlobalFilter(filterValue);
+  };
+
   // Вычисляем общую сумму возраста
   const totalAge = useMemo(() => {
     return data.reduce((sum, row) => sum + (row.age || 0), 0);
@@ -42,14 +75,29 @@ const MaterialTable = () => {
         //Cell: ({ cell }) => cell.getValue()?.toLocalDateString(),
         size: 40,
       }),
-      columnHelper.accessor("id", {
+
+      {
+        accessorKey: "id",
         header: "ID",
-        size: 40,
-      }),
+        Header: <i style={{ color: "red" }}>ID </i>, // польз. header применяется без accessorFn, header и Header должны быть друг за другом
+        size: 80,
+        grow: false, //не разрешать этому столбцу увеличиваться (если layoutMode — это сетка)
+      },
+      // columnHelper.accessor("id", {
+      //   header: "ID",
+      //   size: 40,
+      // }),
       columnHelper.accessor("firstName", {
         header: "First Name",
+        accessorFn: (row) => row.firstName,
         size: 120,
       }),
+      {
+        // объединение данных в одну колонку
+        accessorFn: (row) => `${row.firstName} ${row.lastName}`,
+        id: "name",
+        header: "Name",
+      },
       columnHelper.accessor("lastName", {
         header: "Last Name",
         size: 120,
@@ -60,6 +108,8 @@ const MaterialTable = () => {
       }),
       columnHelper.accessor("city", {
         header: "City",
+        filterVariant: "multi-select", //или select - один вариант
+        filterSelectOptions: citiesList,
       }),
       columnHelper.accessor("country", {
         header: "Country",
@@ -68,8 +118,38 @@ const MaterialTable = () => {
       columnHelper.accessor("age", {
         header: "Возраст",
         size: 220,
+        aggregationFn: "count",
         Footer: () => <p>Общая сумма: {totalAge}</p>,
       }),
+      {
+        accessorKey: "salary",
+        header: "Salary",
+        Cell: ({ cell }) => {
+          try {
+            const value = cell.getValue();
+            return (
+              <span>
+                $
+                {typeof value === "number"
+                  ? value.toLocaleString()
+                  : "нет данных"}
+              </span>
+            );
+          } catch (error) {
+            console.error("Ошибка:", error);
+            return <span>Нет данных</span>; // Отображаем сообщение об ошибке
+          }
+        },
+      },
+      {
+        header: "Интернет-магазин",
+        accessorFn: (originalRow) => (originalRow.isActive ? "true" : "false"),
+        id: "isActive",
+        filterVariant: "checkbox",
+        Cell: ({ cell }) =>
+          cell.getValue() === "true" ? "Active" : "Inactive",
+        size: 300,
+      },
     ],
     { totalAge }
   );
@@ -105,12 +185,21 @@ const MaterialTable = () => {
   const table = useMaterialReactTable({
     columns,
     data,
+    enableColumnFilterModes: true,
+    mrtTheme: {
+      // подсветка при передвижении стрелками на клавиатуре
+      cellNavigationOutlineColor: "limegreen",
+    },
+    muiTableBodyRowProps: ({ row }) => ({
+      sx: {
+        backgroundColor: row.depth === 0 ? "#f5f5f5" : "inherit", // Подсветка родительских строк
+      },
+    }),
     displayColumnDefOptions: {
       "mrt-row-expand": {
         Header: () => (
           <Stack direction="row" alignItems="center">
             <MRT_ExpandAllButton table={table} />
-            <Box>Groups</Box>
           </Stack>
         ),
         GroupedCell: ({ row, table }) => {
@@ -128,9 +217,18 @@ const MaterialTable = () => {
                 : undefined,
           }),
         }),
-        size: 200,
+
+        size: 60,
+      },
+      "mrt-row-numbers": {
+        enableOrdering: true,
+        enablePinning: true,
+        enableColumnActions: true,
+        size: 40,
+        grow: true, //new in v2.8
       },
     },
+    enableRowPinning: true,
     aggregationFns: true,
     enableStickyFooter: true, // футер закреплен
     enableColumnActions: true,
@@ -138,7 +236,7 @@ const MaterialTable = () => {
     enableExpanding: true,
     enableExpandAll: false, // кнопка открыть все дочерние строки
     maxLeafRowFilterDepth: 0, //При фильтрации корневых строк сохранить все дочерние строки проходящих родительских строк
-    getSubRows: (originalRow) => originalRow.subRows,
+    getSubRows: (originalRow) => originalRow.subRows || [],
     paginateExpandedRows: false, // дочерние строки вместе с родителями на 1 странице
     filterFromLeafRows: false, //применить фильтрацию ко всем строкам, а не только к родительским строкам
     localization: MRT_Localization_RU,
@@ -156,16 +254,32 @@ const MaterialTable = () => {
     enableBottomToolbar: true, // вкл/откл нижней панели
     enableTopToolbar: true, //вкл/откл верхней панели
     positionGlobalFilter: "right",
+
     initialState: {
+      density: "compact", //standart, spacious
+      pagination: { pageIndex: 0, pageSize: 30 },
       columnVisibility: { lastName: false }, // при обновлении стр по ум скрываем колонку
       showColumnFilters: true,
-      showGlobalFilter: true,
-      expanded: true, //по ум все строки открыты
+      showGlobalFilter: false,
+      expanded: false, //по ум все строки открыты true, false - закрыты
       grouping: ["age"], // группировка по ум.
+      sorting,
+      globalFilter,
     },
+    onGlobalFilterChange: handleGlobalFilterChange,
+    onSortingChange: setSorting,
+    state: {
+      sorting,
+      globalFilter,
+    },
+    groupedColumnMode: "reorder",
+    //     manualGrouping: true,
+    // onGroupingChange: (updater) => {
+    //   const newGrouping = updater(table.getState().grouping);
+    //   // Отправка запроса на сервер с параметрами группировки
+    // },
     //enableFilterMatchHighlighting: true,
     enableGlobalFilter: true,
-    columnFilterDisplayMode: "popover",
     paginationDisplayMode: "pages",
     positionToolbarAlertBanner: "bottom",
     renderTopToolbarCustomActions: ({ table }) => (
@@ -252,6 +366,7 @@ const MaterialTable = () => {
           >
             Экспорт выбранных строк PDF
           </Button>
+          <Button onClick={resetState}>Сбросить все</Button>
         </Box>
       </>
     ),

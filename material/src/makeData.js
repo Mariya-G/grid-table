@@ -1,23 +1,16 @@
-// admin2
-// adsfg9o76gnvb
-/*<a href="/apteka-ural/OV_4.6.pdf" target="_blank">Описание релиза</a><br>*/
-<h3>Честный знак:</h3>
-	<div>
-		<ul>
-			<li><a href="http://aptekaural.ru/dlya-polzovateley/">Установка и настройка ЛМЧЗ</a></li>
-</ul>
-</div>
+/* eslint-disable no-dupe-keys */
 export const data = [
   {
     id: 1,
     firstName: "Elenora",
+    isActive: true,
     subRows: [
       {
         id: 2,
         firstName: "Jane Doe",
         column: 11,
         city: "Hertaland",
-        date: "2025-01-01",
+        date: "2025 - 01 - 01",
         age: 24,
         subRows: [
           {
@@ -29,6 +22,7 @@ export const data = [
             id: 3,
             firstName: "Frieda",
             column: 10,
+            age: 24,
           },
         ],
       },
@@ -36,6 +30,7 @@ export const data = [
         id: 3,
         firstName: "Jane Doe1",
         column: 15,
+        age: 24,
       },
     ],
     lastName: "Wilkinson",
@@ -43,6 +38,7 @@ export const data = [
     city: "Hertaland",
     country: "Qatar",
     column: 40,
+    age: 24,
   },
   {
     id: 2,
@@ -1737,3 +1733,13 @@ export const data = [
     salary: 35294,
   },
 ];
+
+const citiesLists = new Set();
+
+for (let key of data) {
+  if (key.city) {
+    citiesLists.add(key.city);
+  }
+}
+
+export const citiesList = [...citiesLists];

@@ -1,18 +1,18 @@
 /* eslint-disable react/prop-types */
 import { useMemo, useState, useEffect } from "react";
-
+import { BASE64 } from "./BASE64";
 import {
   MaterialReactTable,
   useMaterialReactTable,
   createMRTColumnHelper,
   MRT_ExpandAllButton,
 } from "material-react-table";
-import { Box, Button, Stack } from "@mui/material";
+import { Box, Button, Stack, Menu, MenuItem } from "@mui/material";
 
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import { mkConfig, generateCsv, download } from "export-to-csv";
 import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
+import { autoTable } from "jspdf-autotable";
 import { data, citiesList } from "./makeData";
 import { MRT_Localization_RU } from "material-react-table/locales/ru";
 import { createTheme, ThemeProvider, useTheme } from "@mui/material";
@@ -27,6 +27,7 @@ const csvConfig = mkConfig({
 });
 
 const MaterialTable = () => {
+  const [openListCSV, setOpenListCSV] = useState(null);
   // const rowVirtualizerInstanceRef = useRef(null);
   // const [data1, setData1] = useState(data);
   const [sorting, setSorting] = useState(() => {
@@ -37,6 +38,13 @@ const MaterialTable = () => {
   const [globalFilter, setGlobalFilter] = useState(() => {
     return sessionStorage.getItem("globalFilter") || "";
   });
+  const handleMenuClick = (event) => {
+    setOpenListCSV(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setOpenListCSV(null);
+  };
 
   // Сохранение состояния сортировки в sessionStorage
   useEffect(() => {
@@ -60,6 +68,12 @@ const MaterialTable = () => {
   const handleGlobalFilterChange = (filterValue) => {
     setGlobalFilter(filterValue);
   };
+  // Кастомная функция фильтрации
+  const fuzzyFilter = (row, columnId, value) => {
+    console.log(value);
+    const rowValue = row.getValue(columnId);
+    return rowValue.toLowerCase().includes(value.toLowerCase());
+  };
 
   // Вычисляем общую сумму возраста
   const totalAge = useMemo(() => {
@@ -69,7 +83,7 @@ const MaterialTable = () => {
   const columns = useMemo(
     () => [
       columnHelper.accessor("date", {
-        header: "Дата",
+        header: "Date",
         filterVariant: "data-range",
         //accessorFn: (row) => new Date(row.date),
         //Cell: ({ cell }) => cell.getValue()?.toLocalDateString(),
@@ -77,8 +91,9 @@ const MaterialTable = () => {
       }),
 
       {
-        accessorKey: "id",
         header: "ID",
+        accessorKey: "id",
+
         Header: <i style={{ color: "red" }}>ID </i>, // польз. header применяется без accessorFn, header и Header должны быть друг за другом
         size: 80,
         grow: false, //не разрешать этому столбцу увеличиваться (если layoutMode — это сетка)
@@ -87,16 +102,21 @@ const MaterialTable = () => {
       //   header: "ID",
       //   size: 40,
       // }),
-      columnHelper.accessor("firstName", {
-        header: "First Name",
-        accessorFn: (row) => row.firstName,
-        size: 120,
-      }),
+      // columnHelper.accessor("firstName", {
+      //   header: "First Name",
+      //   accessorFn: (row) => row.firstName,
+      //   size: 120,
+      // }),
+      {
+        header: "Наименование товара",
+        accessorKey: "firstName",
+        size: 400,
+        filterFn: fuzzyFilter,
+      },
       {
         // объединение данных в одну колонку
-        accessorFn: (row) => `${row.firstName} ${row.lastName}`,
-        id: "name",
         header: "Name",
+        accessorFn: (row) => `${row.firstName} ${row.lastName}`,
       },
       columnHelper.accessor("lastName", {
         header: "Last Name",
@@ -122,8 +142,9 @@ const MaterialTable = () => {
         Footer: () => <p>Общая сумма: {totalAge}</p>,
       }),
       {
-        accessorKey: "salary",
         header: "Salary",
+        accessorKey: "salary",
+
         Cell: ({ cell }) => {
           try {
             const value = cell.getValue();
@@ -155,13 +176,26 @@ const MaterialTable = () => {
   );
 
   const theme = useTheme();
-
+  // фильтр точного совпадения
+  // const exactMatchFilter = (row, columnId, value) => {
+  //   const rowValue = row.getValue(columnId);
+  //   return rowValue.toLowerCase() === value.toLowerCase();
+  // };
+  // const handleFilterChange = (event) => {
+  //   setGlobalFilter(event.target.value);
+  // };
   // экспорт pdf
   const handleExportRowsPdf = (rows) => {
-    const doc = new jsPDF();
+    const doc = new jsPDF("landscape");
+
+    doc.addFileToVFS("Roboto.ttf", BASE64);
+    doc.addFont("Roboto.ttf", "Roboto", "normal");
+    doc.setFont("Roboto");
+
     const tableData = rows.map((row) => Object.values(row.original));
     const tableHeaders = columns.map((c) => c.header);
 
+    console.log(tableHeaders);
     autoTable(doc, {
       head: [tableHeaders],
       body: tableData,
@@ -186,15 +220,16 @@ const MaterialTable = () => {
     columns,
     data,
     enableColumnFilterModes: true,
+
     mrtTheme: {
       // подсветка при передвижении стрелками на клавиатуре
       cellNavigationOutlineColor: "limegreen",
     },
-    muiTableBodyRowProps: ({ row }) => ({
-      sx: {
-        backgroundColor: row.depth === 0 ? "#f5f5f5" : "inherit", // Подсветка родительских строк
-      },
-    }),
+    // muiTableBodyRowProps: ({ row }) => ({
+    //   sx: {
+    //     backgroundColor: row.depth === 0 ? "#f5f5f5" : "inherit", // Подсветка родительских строк
+    //   },
+    // }),
     displayColumnDefOptions: {
       "mrt-row-expand": {
         Header: () => (
@@ -202,9 +237,13 @@ const MaterialTable = () => {
             <MRT_ExpandAllButton table={table} />
           </Stack>
         ),
-        GroupedCell: ({ row, table }) => {
-          const { grouping } = table.getState();
-          return row.getValue(grouping[grouping.length - 1]);
+        // GroupedCell: ({ row, table }) => {
+        //   const { grouping } = table.getState();
+        //   return row.getValue(grouping[grouping.length - 1]);
+        // },
+        GroupedCell: ({ row }) => {
+          const rowCount = row.getVisibleCells().length; // Получаем количество видимых ячеек в группе
+          return `${row.getValue("city")} (${rowCount})`;
         },
         enableResizing: true,
         muiTableBodyCellProps: ({ row }) => ({
@@ -225,7 +264,7 @@ const MaterialTable = () => {
         enablePinning: true,
         enableColumnActions: true,
         size: 40,
-        grow: true, //new in v2.8
+        grow: true, //колонки занимают оставшееся пространство
       },
     },
     enableRowPinning: true,
@@ -233,7 +272,7 @@ const MaterialTable = () => {
     enableStickyFooter: true, // футер закреплен
     enableColumnActions: true,
     enableColumnFilters: true,
-    enableExpanding: true,
+    enableExpanding: true, //Позволяет раскрывать строки для отображения дополнительных данных.
     enableExpandAll: false, // кнопка открыть все дочерние строки
     maxLeafRowFilterDepth: 0, //При фильтрации корневых строк сохранить все дочерние строки проходящих родительских строк
     getSubRows: (originalRow) => originalRow.subRows || [],
@@ -248,23 +287,25 @@ const MaterialTable = () => {
     enableRowSelection: true,
     showProgressBars: true,
     enableRowNumbers: true,
+    globalFilterFn: { fuzzyFilter },
+    // globalFilterFn: "contains", // отключение нечеткого соответствия в поиске
     enableColumnResizing: true, // расширение колонок
     enableStickyHeader: true, //шапка зафиксированна
-    muiTableContainerProps: { sx: { maxHeight: "500px" } },
+    //muiTableContainerProps: { sx: { maxHeight: "500px" } },
     enableBottomToolbar: true, // вкл/откл нижней панели
     enableTopToolbar: true, //вкл/откл верхней панели
     positionGlobalFilter: "right",
-
     initialState: {
       density: "compact", //standart, spacious
       pagination: { pageIndex: 0, pageSize: 30 },
       columnVisibility: { lastName: false }, // при обновлении стр по ум скрываем колонку
       showColumnFilters: true,
       showGlobalFilter: false,
-      expanded: false, //по ум все строки открыты true, false - закрыты
-      grouping: ["age"], // группировка по ум.
+      expanded: true, //по ум все строки открыты true, false - закрыты
+      grouping: ["city"], // группировка по ум.
       sorting,
       globalFilter,
+      columnPinning: { left: ["firstName"] },
     },
     onGlobalFilterChange: handleGlobalFilterChange,
     onSortingChange: setSorting,
@@ -288,46 +329,45 @@ const MaterialTable = () => {
           sx={{
             display: "flex",
             gap: "16px",
-            padding: "8px",
             flexWrap: "wrap",
           }}
         >
-          <Button
-            //export all data that is currently in the table (ignore pagination, sorting, filtering, etc.)
-            onClick={handleExportData}
-            startIcon={<FileDownloadIcon />}
-          >
-            Экспортировать все данные CSV
+          <Button onClick={handleMenuClick} startIcon={<FileDownloadIcon />}>
+            Экспортировать CSV:
           </Button>
-          <Button
-            disabled={table.getPrePaginationRowModel().rows.length === 0}
-            //export all rows, including from the next page, (still respects filtering and sorting)
-            onClick={() =>
-              handleExportRows(table.getPrePaginationRowModel().rows)
-            }
-            startIcon={<FileDownloadIcon />}
+          <Menu
+            anchorEl={openListCSV}
+            open={Boolean(openListCSV)}
+            onClose={handleMenuClose}
           >
-            Экспортировать все строки CSV
-          </Button>
-          <Button
-            disabled={table.getRowModel().rows.length === 0}
-            //export all rows as seen on the screen (respects pagination, sorting, filtering, etc.)
-            onClick={() => handleExportRows(table.getRowModel().rows)}
-            startIcon={<FileDownloadIcon />}
-          >
-            Экспортировать строки на странице CSV
-          </Button>
-          <Button
-            disabled={
-              !table.getIsSomeRowsSelected() && !table.getIsAllRowsSelected()
-            }
-            //only export selected rows
-            onClick={() => handleExportRows(table.getSelectedRowModel().rows)}
-            startIcon={<FileDownloadIcon />}
-          >
-            Экспортировать выбранные строки CSV
-          </Button>
+            <MenuItem onClick={handleExportData}>
+              Экспортировать все данные CSV
+            </MenuItem>
+            <MenuItem
+              disabled={table.getPrePaginationRowModel().rows.length === 0}
+              onClick={() =>
+                handleExportRows(table.getPrePaginationRowModel().rows)
+              }
+            >
+              Экспортировать все строки CSV
+            </MenuItem>
+            <MenuItem
+              disabled={table.getRowModel().rows.length === 0}
+              onClick={() => handleExportRows(table.getRowModel().rows)}
+            >
+              Экспортировать строки на странице CSV
+            </MenuItem>
+            <MenuItem
+              disabled={
+                !table.getIsSomeRowsSelected() && !table.getIsAllRowsSelected()
+              }
+              onClick={() => handleExportRows(table.getSelectedRowModel().rows)}
+            >
+              Экспортировать выбранные строки CSV
+            </MenuItem>
+          </Menu>
         </Box>
+
         <Box
           sx={{
             display: "flex",

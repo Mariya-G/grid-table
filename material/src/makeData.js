@@ -2,12 +2,12 @@
 export const data = [
   {
     id: 1,
-    firstName: "Elenora",
+    firstName: "Анна",
     isActive: true,
     subRows: [
       {
         id: 2,
-        firstName: "Jane Doe",
+        firstName: "БЛАГОМИН ВИТАМИН В1 (тиамин) капс. 250 мг N 40 (БАД)",
         column: 11,
         city: "Hertaland",
         date: "2025 - 01 - 01",
@@ -39,6 +39,27 @@ export const data = [
     country: "Qatar",
     column: 40,
     age: 24,
+  },
+  {
+    id: 1,
+    firstName: "Elenora",
+    isActive: true,
+    lastName: "Wilkinson",
+    company: "Feest - Reilly",
+    city: "Hertaland",
+    country: "Qatar",
+    column: 40,
+    age: 24,
+  },
+  {
+    id: 2,
+    firstName: "Berneice",
+    lastName: "Feil",
+    company: "Deckow, Leuschke and Jaskolski",
+    city: "Millcreek",
+    country: "Nepal",
+    date: "2025-02-01",
+    age: 28,
   },
   {
     id: 2,

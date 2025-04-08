@@ -1,22 +1,31 @@
 /* eslint-disable react/prop-types */
 import { useMemo, useState, useEffect } from "react";
-import { BASE64 } from "./BASE64";
+import { BASE64 } from "../utils/BASE64";
 import {
   MaterialReactTable,
   useMaterialReactTable,
   createMRTColumnHelper,
   MRT_ExpandAllButton,
 } from "material-react-table";
-import { Box, Button, Stack, Menu, MenuItem } from "@mui/material";
+import {
+  Box,
+  //Button,
+  Stack,
+  Menu,
+  MenuItem,
+  Tooltip,
+  IconButton,
+} from "@mui/material";
 
-import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import { Download, Close } from "@mui/icons-material";
 import { mkConfig, generateCsv, download } from "export-to-csv";
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
-import { data, citiesList } from "./makeData";
+
 import { MRT_Localization_RU } from "material-react-table/locales/ru";
 import { createTheme, ThemeProvider, useTheme } from "@mui/material";
 import { ruRU } from "@mui/material/locale";
+//import { citiesList } from "../utils/makeData";
 
 const columnHelper = createMRTColumnHelper();
 
@@ -26,18 +35,23 @@ const csvConfig = mkConfig({
   useKeysAsHeaders: true,
 });
 
-const MaterialTable = () => {
+const MaterialTable = ({ data, columns }) => {
   const [openListCSV, setOpenListCSV] = useState(null);
-  // const rowVirtualizerInstanceRef = useRef(null);
-  // const [data1, setData1] = useState(data);
+
   const [sorting, setSorting] = useState(() => {
-    // Загружаем состояние сортировки из sessionStorage
-    const storedSorting = sessionStorage.getItem("mrt_sorting_table_1");
+    const storedSorting = localStorage.getItem("mrt_sorting_table_1");
     return storedSorting ? JSON.parse(storedSorting) : [];
   });
+
   const [globalFilter, setGlobalFilter] = useState(() => {
-    return sessionStorage.getItem("globalFilter") || "";
+    return localStorage.getItem("globalFilter") || "";
   });
+
+  const [columnFilters, setColumnFilters] = useState(() => {
+    const storedColumnFilters = localStorage.getItem("columnFilters");
+    return storedColumnFilters ? JSON.parse(storedColumnFilters) : [];
+  });
+
   const handleMenuClick = (event) => {
     setOpenListCSV(event.currentTarget);
   };
@@ -46,145 +60,135 @@ const MaterialTable = () => {
     setOpenListCSV(null);
   };
 
-  // Сохранение состояния сортировки в sessionStorage
+  // Сохранение состояния сортировки в localStorage
   useEffect(() => {
-    sessionStorage.setItem("mrt_sorting_table_1", JSON.stringify(sorting));
+    localStorage.setItem("mrt_sorting_table_1", JSON.stringify(sorting));
   }, [sorting]);
+
+  //сохранение фильтров в колонках
+  useEffect(() => {
+    localStorage.setItem("сolumnFilters", JSON.stringify(columnFilters));
+    console.log(columnFilters);
+  }, [columnFilters]);
 
   //сброс данных в хранилище
   const resetState = () => {
-    sessionStorage.removeItem("mrt_sorting_table_1");
-    sessionStorage.removeItem("globalFilter");
+    localStorage.removeItem("mrt_sorting_table_1");
+    localStorage.removeItem("globalFilter");
+    localStorage.removeItem("columnFilters");
     setSorting([]);
     setGlobalFilter("");
+    setColumnFilters([]);
     // window.location.reload();
   };
 
   // Сохраняем состояние глобального фильтра в sessionStorage при его изменении
   useEffect(() => {
-    sessionStorage.setItem("globalFilter", globalFilter);
+    localStorage.setItem("globalFilter", globalFilter);
   }, [globalFilter]);
 
-  const handleGlobalFilterChange = (filterValue) => {
-    setGlobalFilter(filterValue);
-  };
-  // Кастомная функция фильтрации
-  const fuzzyFilter = (row, columnId, value) => {
-    console.log(value);
-    const rowValue = row.getValue(columnId);
-    return rowValue.toLowerCase().includes(value.toLowerCase());
-  };
+  // // Вычисляем общую сумму возраста
+  // const totalAge = useMemo(() => {
+  //   return data.reduce((sum, row) => sum + (row.age || 0), 0);
+  // }, [data]);
 
-  // Вычисляем общую сумму возраста
-  const totalAge = useMemo(() => {
-    return data.reduce((sum, row) => sum + (row.age || 0), 0);
-  }, [data]);
+  // const columns = useMemo(
+  //   () => [
+  //     // {
+  //     //   header: "ID",
+  //     //   accessorKey: "id",
 
-  const columns = useMemo(
-    () => [
-      columnHelper.accessor("date", {
-        header: "Date",
-        filterVariant: "data-range",
-        //accessorFn: (row) => new Date(row.date),
-        //Cell: ({ cell }) => cell.getValue()?.toLocalDateString(),
-        size: 40,
-      }),
-
-      {
-        header: "ID",
-        accessorKey: "id",
-
-        Header: <i style={{ color: "red" }}>ID </i>, // польз. header применяется без accessorFn, header и Header должны быть друг за другом
-        size: 80,
-        grow: false, //не разрешать этому столбцу увеличиваться (если layoutMode — это сетка)
-      },
-      // columnHelper.accessor("id", {
-      //   header: "ID",
-      //   size: 40,
-      // }),
-      // columnHelper.accessor("firstName", {
-      //   header: "First Name",
-      //   accessorFn: (row) => row.firstName,
-      //   size: 120,
-      // }),
-      {
-        header: "Наименование товара",
-        accessorKey: "firstName",
-        size: 400,
-        filterFn: fuzzyFilter,
-      },
-      {
-        // объединение данных в одну колонку
-        header: "Name",
-        accessorFn: (row) => `${row.firstName} ${row.lastName}`,
-      },
-      columnHelper.accessor("lastName", {
-        header: "Last Name",
-        size: 120,
-      }),
-      columnHelper.accessor("company", {
-        header: "Company",
-        size: 300,
-      }),
-      columnHelper.accessor("city", {
-        header: "City",
-        filterVariant: "multi-select", //или select - один вариант
-        filterSelectOptions: citiesList,
-      }),
-      columnHelper.accessor("country", {
-        header: "Country",
-        size: 220,
-      }),
-      columnHelper.accessor("age", {
-        header: "Возраст",
-        size: 220,
-        aggregationFn: "count",
-        Footer: () => <p>Общая сумма: {totalAge}</p>,
-      }),
-      {
-        header: "Salary",
-        accessorKey: "salary",
-
-        Cell: ({ cell }) => {
-          try {
-            const value = cell.getValue();
-            return (
-              <span>
-                $
-                {typeof value === "number"
-                  ? value.toLocaleString()
-                  : "нет данных"}
-              </span>
-            );
-          } catch (error) {
-            console.error("Ошибка:", error);
-            return <span>Нет данных</span>; // Отображаем сообщение об ошибке
-          }
-        },
-      },
-      {
-        header: "Интернет-магазин",
-        accessorFn: (originalRow) => (originalRow.isActive ? "true" : "false"),
-        id: "isActive",
-        filterVariant: "checkbox",
-        Cell: ({ cell }) =>
-          cell.getValue() === "true" ? "Active" : "Inactive",
-        size: 300,
-      },
-    ],
-    { totalAge }
-  );
+  //     //   Header: <i style={{ color: "red" }}>ID </i>, // польз. header применяется без accessorFn, header и Header должны быть друг за другом
+  //     //   size: 80,
+  //     //   grow: false, //не разрешать этому столбцу увеличиваться (если layoutMode — это сетка)
+  //     // },
+  //     {
+  //       header: "Наименование товара",
+  //       accessorKey: "firstName",
+  //       size: 300,
+  //     },
+  //     {
+  //       // объединение данных в одну колонку
+  //       header: "Name",
+  //       accessorFn: (row) => `${row.firstName} ${row.lastName}`,
+  //     },
+  //     columnHelper.accessor("lastName", {
+  //       header: "Last Name",
+  //       size: 120,
+  //     }),
+  //     columnHelper.accessor("company", {
+  //       header: "Company",
+  //       size: 300,
+  //     }),
+  //     columnHelper.accessor("city", {
+  //       header: "City",
+  //       filterVariant: "multi-select", //или select - один вариант
+  //       filterSelectOptions: citiesList,
+  //     }),
+  //     columnHelper.accessor("country", {
+  //       header: "Country",
+  //       size: 220,
+  //       //enableColumnFilter: false,
+  //     }),
+  //     columnHelper.accessor("date", {
+  //       header: "Date",
+  //       filterVariant: "data-range",
+  //       //accessorFn: (row) => new Date(row.date),
+  //       //Cell: ({ cell }) => cell.getValue()?.toLocalDateString(),
+  //       size: 240,
+  //     }),
+  //     columnHelper.accessor("age", {
+  //       header: "Возраст",
+  //       size: 220,
+  //       aggregationFn: "count",
+  //       filterVariant: "data-range",
+  //       // Footer: () => <p>Общая сумма: {totalAge}</p>,
+  //     }),
+  //     {
+  //       header: "Salary",
+  //       accessorKey: "salary",
+  //       filterVariant: "data-range",
+  //       Cell: ({ cell }) => {
+  //         try {
+  //           const value = cell.getValue();
+  //           return (
+  //             <span>
+  //               $
+  //               {typeof value === "number"
+  //                 ? value.toLocaleString()
+  //                 : "нет данных"}
+  //             </span>
+  //           );
+  //         } catch (error) {
+  //           console.error("Ошибка:", error);
+  //           return <span>Нет данных</span>; // Отображаем сообщение об ошибке
+  //         }
+  //       },
+  //     },
+  //     {
+  //       header: "Интернет-магазин",
+  //       accessorFn: (originalRow) => (originalRow.isActive ? "true" : "false"),
+  //       id: "isActive",
+  //       filterVariant: "checkbox",
+  //       Cell: ({ cell }) =>
+  //         cell.getValue() === "true" ? "Active" : "Inactive",
+  //       size: 300,
+  //     },
+  //   ]
+  //   // [totalAge]
+  // );
 
   const theme = useTheme();
-  // фильтр точного совпадения
-  // const exactMatchFilter = (row, columnId, value) => {
-  //   const rowValue = row.getValue(columnId);
-  //   return rowValue.toLowerCase() === value.toLowerCase();
-  // };
+
   // const handleFilterChange = (event) => {
   //   setGlobalFilter(event.target.value);
   // };
-  // экспорт pdf
+
+  const handleShowColumnFiltersChange = (newFilters) => {
+    setColumnFilters(newFilters);
+  };
+
+  //экспорт pdf
   const handleExportRowsPdf = (rows) => {
     const doc = new jsPDF("landscape");
 
@@ -195,7 +199,6 @@ const MaterialTable = () => {
     const tableData = rows.map((row) => Object.values(row.original));
     const tableHeaders = columns.map((c) => c.header);
 
-    console.log(tableHeaders);
     autoTable(doc, {
       head: [tableHeaders],
       body: tableData,
@@ -219,32 +222,22 @@ const MaterialTable = () => {
   const table = useMaterialReactTable({
     columns,
     data,
-    enableColumnFilterModes: true,
+    enableColumnFilterModes: false, // доп меню фильтров для колонок
 
     mrtTheme: {
-      // подсветка при передвижении стрелками на клавиатуре
-      cellNavigationOutlineColor: "limegreen",
+      cellNavigationOutlineColor: "#319ce8", // подсветка при передвижении стрелками на клавиатуре
     },
-    // muiTableBodyRowProps: ({ row }) => ({
-    //   sx: {
-    //     backgroundColor: row.depth === 0 ? "#f5f5f5" : "inherit", // Подсветка родительских строк
-    //   },
-    // }),
     displayColumnDefOptions: {
       "mrt-row-expand": {
         Header: () => (
-          <Stack direction="row" alignItems="center">
+          <Stack direction="row" alignItems="right">
             <MRT_ExpandAllButton table={table} />
           </Stack>
         ),
-        // GroupedCell: ({ row, table }) => {
-        //   const { grouping } = table.getState();
-        //   return row.getValue(grouping[grouping.length - 1]);
+        // GroupedCell: ({ row }) => {
+        //   const rowCount = row.getVisibleCells().length; // Получаем количество видимых ячеек в группе
+        //   return `${row.getValue("city")} (${rowCount})`;
         // },
-        GroupedCell: ({ row }) => {
-          const rowCount = row.getVisibleCells().length; // Получаем количество видимых ячеек в группе
-          return `${row.getValue("city")} (${rowCount})`;
-        },
         enableResizing: true,
         muiTableBodyCellProps: ({ row }) => ({
           sx: (theme) => ({
@@ -267,17 +260,12 @@ const MaterialTable = () => {
         grow: true, //колонки занимают оставшееся пространство
       },
     },
+    //enableRowVirtualization: true, //для оптимизации загрузки строк
     enableRowPinning: true,
     aggregationFns: true,
     enableStickyFooter: true, // футер закреплен
     enableColumnActions: true,
     enableColumnFilters: true,
-    enableExpanding: true, //Позволяет раскрывать строки для отображения дополнительных данных.
-    enableExpandAll: false, // кнопка открыть все дочерние строки
-    maxLeafRowFilterDepth: 0, //При фильтрации корневых строк сохранить все дочерние строки проходящих родительских строк
-    getSubRows: (originalRow) => originalRow.subRows || [],
-    paginateExpandedRows: false, // дочерние строки вместе с родителями на 1 странице
-    filterFromLeafRows: false, //применить фильтрацию ко всем строкам, а не только к родительским строкам
     localization: MRT_Localization_RU,
     enableGrouping: true,
     manualGrouping: true,
@@ -286,12 +274,10 @@ const MaterialTable = () => {
     enableColumnPinning: true, //закрепление колонок
     enableRowSelection: true,
     showProgressBars: true,
-    enableRowNumbers: true,
-    globalFilterFn: { fuzzyFilter },
-    // globalFilterFn: "contains", // отключение нечеткого соответствия в поиске
+    enableRowNumbers: false, //номера строк
     enableColumnResizing: true, // расширение колонок
     enableStickyHeader: true, //шапка зафиксированна
-    //muiTableContainerProps: { sx: { maxHeight: "500px" } },
+    muiTableContainerProps: { sx: { minHeight: "750px" } },
     enableBottomToolbar: true, // вкл/откл нижней панели
     enableTopToolbar: true, //вкл/откл верхней панели
     positionGlobalFilter: "right",
@@ -301,17 +287,17 @@ const MaterialTable = () => {
       columnVisibility: { lastName: false }, // при обновлении стр по ум скрываем колонку
       showColumnFilters: true,
       showGlobalFilter: false,
-      expanded: true, //по ум все строки открыты true, false - закрыты
-      grouping: ["city"], // группировка по ум.
-      sorting,
-      globalFilter,
-      columnPinning: { left: ["firstName"] },
+      //grouping: ["city"], // группировка по ум.
+      columnPinning: { left: ["firstName"] }, //закрепление по ум.
     },
-    onGlobalFilterChange: handleGlobalFilterChange,
+    onGlobalFilterChange: setGlobalFilter,
     onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
     state: {
       sorting,
       globalFilter,
+      //showColumnFilters,
+      columnFilters,
     },
     groupedColumnMode: "reorder",
     //     manualGrouping: true,
@@ -328,13 +314,16 @@ const MaterialTable = () => {
         <Box
           sx={{
             display: "flex",
-            gap: "16px",
             flexWrap: "wrap",
+            justifyContent: "end",
+            width: "100%",
           }}
         >
-          <Button onClick={handleMenuClick} startIcon={<FileDownloadIcon />}>
-            Экспортировать CSV:
-          </Button>
+          <Tooltip title="Скачать как:">
+            <IconButton aria-label="dowload" onClick={handleMenuClick}>
+              <Download sx={{ color: "#5392ff" }} />
+            </IconButton>
+          </Tooltip>
           <Menu
             anchorEl={openListCSV}
             open={Boolean(openListCSV)}
@@ -366,9 +355,14 @@ const MaterialTable = () => {
               Экспортировать выбранные строки CSV
             </MenuItem>
           </Menu>
+          <Tooltip title="Сбросить все">
+            <IconButton aria-label="reset" onClick={resetState}>
+              <Close sx={{ color: "red" }} />
+            </IconButton>
+          </Tooltip>
         </Box>
 
-        <Box
+        {/* <Box
           sx={{
             display: "flex",
             gap: "16px",
@@ -406,8 +400,8 @@ const MaterialTable = () => {
           >
             Экспорт выбранных строк PDF
           </Button>
-          <Button onClick={resetState}>Сбросить все</Button>
-        </Box>
+          
+        </Box> */}
       </>
     ),
   });

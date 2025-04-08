@@ -4,45 +4,16 @@ export const data = [
     id: 1,
     firstName: "Анна",
     isActive: true,
-    subRows: [
-      {
-        id: 2,
-        firstName: "БЛАГОМИН ВИТАМИН В1 (тиамин) капс. 250 мг N 40 (БАД)",
-        column: 11,
-        city: "Hertaland",
-        date: "2025 - 01 - 01",
-        age: 24,
-        subRows: [
-          {
-            id: 2,
-            firstName: "Berneice",
-            city: "Hertaland",
-          },
-          {
-            id: 3,
-            firstName: "Frieda",
-            column: 10,
-            age: 24,
-          },
-        ],
-      },
-      {
-        id: 3,
-        firstName: "Jane Doe1",
-        column: 15,
-        age: 24,
-      },
-    ],
     lastName: "Wilkinson",
     company: "Feest - Reilly",
-    city: "Hertaland",
+    city: "ООО Фарма Партнер-Плюс | 623383, Свердловская область, г. Полевской, ул. Ленина, д. 18 (От: 2024-02-19 10:35)",
     country: "Qatar",
     column: 40,
     age: 24,
   },
   {
     id: 1,
-    firstName: "Elenora",
+    firstName: "БЛАГОМИН ВИТАМИН В1 (тиамин) капс. 250 мг N 40 (БАД)",
     isActive: true,
     lastName: "Wilkinson",
     company: "Feest - Reilly",
@@ -53,7 +24,7 @@ export const data = [
   },
   {
     id: 2,
-    firstName: "Berneice",
+    firstName: "аЛОЭ",
     lastName: "Feil",
     company: "Deckow, Leuschke and Jaskolski",
     city: "Millcreek",
@@ -63,17 +34,17 @@ export const data = [
   },
   {
     id: 2,
-    firstName: "Berneice",
+    firstName: "Аспирин",
     lastName: "Feil",
     company: "Deckow, Leuschke and Jaskolski",
-    city: "Millcreek",
+    city: "ООО Фарма Партнер-Плюс | 623383, Свердловская область, г. Полевской, ул. Ленина, д. 18 (От: 2024-02-19 10:35)",
     country: "Nepal",
     date: "2025-02-01",
     age: 28,
   },
   {
     id: 3,
-    firstName: "Frieda",
+    firstName: "зеленка",
     lastName: "Baumbach",
     company: "Heidenreich, Grady and Durgan",
     city: "Volkmanside",
@@ -1752,6 +1723,20 @@ export const data = [
     gender: "Male",
     state: "Virginia",
     salary: 35294,
+  },
+];
+export const dataCards = [
+  {
+    firstName: "Кирилл",
+    isActive: true,
+    column: 40,
+    numberCard: 245,
+  },
+  {
+    firstName: "Олег",
+    isActive: true,
+    column: 40,
+    numberCard: 24,
   },
 ];
 

@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-
+import { authorize } from "/src/utils/auth.js";
+import { useAuth } from "./AuthContext";
 function Login() {
   const navigate = useNavigate();
+  const { setLoggedIn } = useAuth();
   const [erorrAuth, setErrorAuth] = useState("");
   const {
     register,
@@ -14,10 +16,10 @@ function Login() {
   });
   const onSubmit = async (data) => {
     try {
-      // const response = await authorize(data);
-      //   localStorage.setItem("access_token", response.access);
-      //   localStorage.setItem("refresh_token", response.refresh);
-      //  // setLoggedIn(true); // Обновляем состояние loggedIn через Context
+      const response = await authorize(data);
+      localStorage.setItem("access_token", response.access);
+      localStorage.setItem("refresh_token", response.refresh);
+      setLoggedIn(true);
       navigate("/");
     } catch (err) {
       console.error(`Ошибка авторизации: ${err}`);

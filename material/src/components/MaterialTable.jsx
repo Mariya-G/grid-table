@@ -6,6 +6,7 @@ import {
   useMaterialReactTable,
   createMRTColumnHelper,
   MRT_ExpandAllButton,
+  MRT_TableHeadCellFilterContainer,
 } from "material-react-table";
 import {
   Box,
@@ -15,6 +16,10 @@ import {
   MenuItem,
   Tooltip,
   IconButton,
+  Paper,
+  useMediaQuery,
+  Autocomplete,
+  TextField,
 } from "@mui/material";
 
 import { Download, Close } from "@mui/icons-material";
@@ -27,7 +32,7 @@ import { createTheme, ThemeProvider, useTheme } from "@mui/material";
 import { ruRU } from "@mui/material/locale";
 //import { citiesList } from "../utils/makeData";
 
-const columnHelper = createMRTColumnHelper();
+//const columnHelper = createMRTColumnHelper();
 
 const csvConfig = mkConfig({
   fieldSeparator: ",",
@@ -35,11 +40,17 @@ const csvConfig = mkConfig({
   useKeysAsHeaders: true,
 });
 
-const MaterialTable = ({ data, columns }) => {
+const MaterialTable = ({ data, columns, citiesList }) => {
+  //const [isLoading, setIsLoading] = useState(true);
   const [openListCSV, setOpenListCSV] = useState(null);
 
+  const [columnFilters, setColumnFilters] = useState(() => {
+    const storedColumnFilters = localStorage.getItem("columnFilters");
+    return storedColumnFilters ? JSON.parse(storedColumnFilters) : [];
+  });
+
   const [sorting, setSorting] = useState(() => {
-    const storedSorting = localStorage.getItem("mrt_sorting_table_1");
+    const storedSorting = localStorage.getItem("sorting");
     return storedSorting ? JSON.parse(storedSorting) : [];
   });
 
@@ -47,10 +58,55 @@ const MaterialTable = ({ data, columns }) => {
     return localStorage.getItem("globalFilter") || "";
   });
 
-  const [columnFilters, setColumnFilters] = useState(() => {
-    const storedColumnFilters = localStorage.getItem("columnFilters");
-    return storedColumnFilters ? JSON.parse(storedColumnFilters) : [];
+  const [pagination, setPagination] = useState(() => {
+    const storedPagination = localStorage.getItem("pagination");
+    try {
+      return storedPagination
+        ? JSON.parse(storedPagination)
+        : { pageIndex: 0, pageSize: 10 };
+    } catch (error) {
+      console.error("Ошибка при парсинге состояния пагинации:", error);
+      return { pageIndex: 0, pageSize: 10 };
+    }
   });
+
+  //Сохранение состояния фильтров в колонках
+  useEffect(() => {
+    localStorage.setItem("сolumnFilters", JSON.stringify(columnFilters));
+  }, [columnFilters]);
+
+  // Сохранение состояния сортировки в localStorage
+  useEffect(() => {
+    localStorage.setItem("sorting", JSON.stringify(sorting));
+  }, [sorting]);
+
+  // Сохраняем состояние глобального фильтра в sessionStorage при его изменении
+  useEffect(() => {
+    localStorage.setItem("globalFilter", globalFilter);
+  }, [globalFilter]);
+
+  // Сохранение состояния пагинации
+  useEffect(() => {
+    localStorage.setItem("pagination", JSON.stringify(pagination));
+  }, [pagination]);
+
+  // // Состояние загрузки
+  // useEffect(() => {
+  //   if (data && data.length > 0) {
+  //     setIsLoading(false);
+  //   } else {
+  //     setIsLoading(true);
+  //   }
+  // }, [data]);
+  //сброс данных в хранилище
+  const resetState = () => {
+    localStorage.removeItem("sorting");
+    localStorage.removeItem("globalFilter");
+    localStorage.removeItem("columnFilters");
+    setSorting([]);
+    setGlobalFilter("");
+    setColumnFilters([]);
+  };
 
   const handleMenuClick = (event) => {
     setOpenListCSV(event.currentTarget);
@@ -59,34 +115,6 @@ const MaterialTable = ({ data, columns }) => {
   const handleMenuClose = () => {
     setOpenListCSV(null);
   };
-
-  // Сохранение состояния сортировки в localStorage
-  useEffect(() => {
-    localStorage.setItem("mrt_sorting_table_1", JSON.stringify(sorting));
-  }, [sorting]);
-
-  //сохранение фильтров в колонках
-  useEffect(() => {
-    localStorage.setItem("сolumnFilters", JSON.stringify(columnFilters));
-    console.log(columnFilters);
-  }, [columnFilters]);
-
-  //сброс данных в хранилище
-  const resetState = () => {
-    localStorage.removeItem("mrt_sorting_table_1");
-    localStorage.removeItem("globalFilter");
-    localStorage.removeItem("columnFilters");
-    setSorting([]);
-    setGlobalFilter("");
-    setColumnFilters([]);
-    // window.location.reload();
-  };
-
-  // Сохраняем состояние глобального фильтра в sessionStorage при его изменении
-  useEffect(() => {
-    localStorage.setItem("globalFilter", globalFilter);
-  }, [globalFilter]);
-
   // // Вычисляем общую сумму возраста
   // const totalAge = useMemo(() => {
   //   return data.reduce((sum, row) => sum + (row.age || 0), 0);
@@ -184,10 +212,6 @@ const MaterialTable = ({ data, columns }) => {
   //   setGlobalFilter(event.target.value);
   // };
 
-  const handleShowColumnFiltersChange = (newFilters) => {
-    setColumnFilters(newFilters);
-  };
-
   //экспорт pdf
   const handleExportRowsPdf = (rows) => {
     const doc = new jsPDF("landscape");
@@ -227,6 +251,7 @@ const MaterialTable = ({ data, columns }) => {
     mrtTheme: {
       cellNavigationOutlineColor: "#319ce8", // подсветка при передвижении стрелками на клавиатуре
     },
+
     displayColumnDefOptions: {
       "mrt-row-expand": {
         Header: () => (
@@ -260,6 +285,7 @@ const MaterialTable = ({ data, columns }) => {
         grow: true, //колонки занимают оставшееся пространство
       },
     },
+
     //enableRowVirtualization: true, //для оптимизации загрузки строк
     enableRowPinning: true,
     aggregationFns: true,
@@ -269,11 +295,11 @@ const MaterialTable = ({ data, columns }) => {
     localization: MRT_Localization_RU,
     enableGrouping: true,
     manualGrouping: true,
+
     enableColumnDragging: true, //перемещение колонок
     enableColumnOrdering: true,
     enableColumnPinning: true, //закрепление колонок
     enableRowSelection: true,
-    showProgressBars: true,
     enableRowNumbers: false, //номера строк
     enableColumnResizing: true, // расширение колонок
     enableStickyHeader: true, //шапка зафиксированна
@@ -281,9 +307,10 @@ const MaterialTable = ({ data, columns }) => {
     enableBottomToolbar: true, // вкл/откл нижней панели
     enableTopToolbar: true, //вкл/откл верхней панели
     positionGlobalFilter: "right",
+    rowPinningDisplayMode: "select-sticky", //sticky' | 'top' | 'bottom' | 'top-and-bottom' | 'select-sticky' | 'select-top' | 'select-bottom'' - поведение строки при закреплении
     initialState: {
-      density: "compact", //standart, spacious
-      pagination: { pageIndex: 0, pageSize: 30 },
+      density: "compact", //состояние пространства в строке: standart, spacious
+      pagination,
       columnVisibility: { lastName: false }, // при обновлении стр по ум скрываем колонку
       showColumnFilters: true,
       showGlobalFilter: false,
@@ -293,11 +320,12 @@ const MaterialTable = ({ data, columns }) => {
     onGlobalFilterChange: setGlobalFilter,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onPaginationChange: setPagination,
     state: {
       sorting,
       globalFilter,
-      //showColumnFilters,
       columnFilters,
+      pagination,
     },
     groupedColumnMode: "reorder",
     //     manualGrouping: true,
@@ -316,7 +344,6 @@ const MaterialTable = ({ data, columns }) => {
             display: "flex",
             flexWrap: "wrap",
             justifyContent: "end",
-            width: "100%",
           }}
         >
           <Tooltip title="Скачать как:">
@@ -409,6 +436,31 @@ const MaterialTable = ({ data, columns }) => {
   return (
     <>
       <ThemeProvider theme={createTheme(theme, ruRU)}>
+        <Paper className="filter-paper">
+          {table
+            .getLeafHeaders()
+            .filter((header) => header.id === "city")
+            .map((header) => {
+              return (
+                header.column.getCanFilter() && (
+                  <Autocomplete
+                    key={header.id}
+                    options={citiesList}
+                    onChange={(event, newValue) => {
+                      header.column.setFilterValue(newValue);
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label={header.column.columnDef.header}
+                        variant="outlined"
+                      />
+                    )}
+                  />
+                )
+              );
+            })}
+        </Paper>
         <MaterialReactTable table={table} />
       </ThemeProvider>
     </>

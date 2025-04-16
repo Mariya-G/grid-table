@@ -1,5 +1,10 @@
 import { NavLink, Link } from "react-router-dom";
+import { Button } from "@mui/material";
+import { Logout } from "@mui/icons-material";
+import { useAuth } from "./AuthContext";
+
 function Header() {
+  const { signOut } = useAuth();
   return (
     <div className="header">
       <nav className="header__menu">
@@ -7,7 +12,7 @@ function Header() {
           Панель администратора
         </Link>
         <NavLink
-          to="/"
+          to="/remains"
           className={({ isActive }) =>
             `header__link ${isActive ? "header__link_active" : ""}`
           }
@@ -39,8 +44,11 @@ function Header() {
           Отчеты
         </NavLink>
       </nav>
-      <Link className="header__link-out" to={"/login"}>
-        Выйти
+
+      <Link className="header__link-out" onClick={signOut} to={"/login"}>
+        <Button variant="outlined" endIcon={<Logout />}>
+          Выйти
+        </Button>
       </Link>
     </div>
   );

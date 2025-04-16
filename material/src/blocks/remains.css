@@ -1,2 +1,9 @@
 .remains {
 }
+.filter-paper {
+  width: 400px;
+  margin: 0 auto 20px;
+  position: absolute;
+  top: 10px;
+  left: 700px;
+}

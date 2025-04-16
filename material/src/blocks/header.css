@@ -4,6 +4,7 @@
   justify-content: space-between;
   width: calc(100% - 40px);
   margin: 0 auto 20px;
+  padding: 20px 0 0 0;
 }
 .header__menu {
   display: flex;
@@ -43,10 +44,15 @@
 
 .header__link-out {
   text-decoration: none;
-  color: #4a4a4a;
+  color: #1976d2;
 }
 
-.header__link:hover,
-.header__link-out:hover {
+.header__link:hover {
   color: #5eace4;
+}
+
+.css-wsew38 {
+  -webkit-justify-content: end !important;
+  justify-content: end !important;
+  flex-flow: row-reverse !important;
 }

@@ -1,5 +1,18 @@
 import { createMRTColumnHelper } from "material-react-table";
 import { citiesList } from "./makeData";
+import { api } from "/src/utils/auth.js";
+
+// const fetchRemains = async () => {
+//   try {
+//     const remainsRes = await api.get(`/remains/`);
+//     console.log(remainsRes.data);
+//   } catch (error) {
+//     console.error("Ошибка при выполнении запроса:", error);
+//   }
+// };
+
+// fetchRemains();
+
 const columnHelper = createMRTColumnHelper();
 
 export const columnsConfig = {
@@ -23,9 +36,11 @@ export const columnsConfig = {
       size: 300,
     }),
     columnHelper.accessor("city", {
-      header: "City",
-      filterVariant: "multi-select", //или select - один вариант
-      filterSelectOptions: citiesList,
+      header: "Адрес",
+      // filterFn: "startsWith",
+      //filterVariant: "multi-select", //или select - один вариант
+      //filterSelectOptions: citiesList,
+      filterVariant: "autocomplete",
     }),
     columnHelper.accessor("country", {
       header: "Country",
@@ -41,6 +56,9 @@ export const columnsConfig = {
       size: 220,
       aggregationFn: "count",
       filterVariant: "data-range",
+      muiTableBodyCellProps: {
+        align: "center",
+      },
     }),
     {
       header: "Salary",
@@ -73,7 +91,7 @@ export const columnsConfig = {
     },
   ],
   sales: [
-    { header: "Название", accessorKey: "firstName" },
+    { header: "Страна", accessorKey: "country" },
     { header: "Продажа", accessorKey: "sales" },
     { header: "Дата", accessorKey: "date" },
   ],

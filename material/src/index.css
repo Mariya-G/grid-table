@@ -1,5 +1,7 @@
 @import url(./blocks/normolize.css);
+@import url(./blocks/pages.css);
 @import url(./blocks/remains.css);
 @import url(./blocks/content.css);
 @import url(./blocks/header.css);
 @import url(./blocks/auth.css);
+@import url(./blocks/sidebar.css);

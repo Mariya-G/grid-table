@@ -40,35 +40,49 @@ const csvConfig = mkConfig({
   useKeysAsHeaders: true,
 });
 
-const MaterialTable = ({ data, columns, citiesList }) => {
-  //const [isLoading, setIsLoading] = useState(true);
+const MaterialTable = ({
+  data,
+  columns,
+  citiesList,
+  pagination,
+  setPagination,
+  totalCount,
+  pageCount,
+  setColumnFilters,
+  columnFilters,
+  sorting,
+  setSorting,
+  globalFilter,
+  setGlobalFilter,
+}) => {
+  const [isLoading, setIsLoading] = useState(true);
   const [openListCSV, setOpenListCSV] = useState(null);
 
-  const [columnFilters, setColumnFilters] = useState(() => {
-    const storedColumnFilters = localStorage.getItem("columnFilters");
-    return storedColumnFilters ? JSON.parse(storedColumnFilters) : [];
-  });
+  // const [columnFilters, setColumnFilters] = useState(() => {
+  //   const storedColumnFilters = localStorage.getItem("columnFilters");
+  //   return storedColumnFilters ? JSON.parse(storedColumnFilters) : [];
+  // });
 
-  const [sorting, setSorting] = useState(() => {
-    const storedSorting = localStorage.getItem("sorting");
-    return storedSorting ? JSON.parse(storedSorting) : [];
-  });
+  // const [sorting, setSorting] = useState(() => {
+  //   const storedSorting = localStorage.getItem("sorting");
+  //   return storedSorting ? JSON.parse(storedSorting) : [];
+  // });
 
-  const [globalFilter, setGlobalFilter] = useState(() => {
-    return localStorage.getItem("globalFilter") || "";
-  });
+  // const [globalFilter, setGlobalFilter] = useState(() => {
+  //   return localStorage.getItem("globalFilter") || "";
+  // });
 
-  const [pagination, setPagination] = useState(() => {
-    const storedPagination = localStorage.getItem("pagination");
-    try {
-      return storedPagination
-        ? JSON.parse(storedPagination)
-        : { pageIndex: 0, pageSize: 10 };
-    } catch (error) {
-      console.error("Ошибка при парсинге состояния пагинации:", error);
-      return { pageIndex: 0, pageSize: 10 };
-    }
-  });
+  // const [pagination, setPagination] = useState(() => {
+  //   const storedPagination = localStorage.getItem("pagination");
+  //   try {
+  //     return storedPagination
+  //       ? JSON.parse(storedPagination)
+  //       : { pageIndex: 0, pageSize: 10 };
+  //   } catch (error) {
+  //     console.error("Ошибка при парсинге состояния пагинации:", error);
+  //     return { pageIndex: 0, pageSize: 10 };
+  //   }
+  // });
 
   //Сохранение состояния фильтров в колонках
   useEffect(() => {
@@ -90,14 +104,14 @@ const MaterialTable = ({ data, columns, citiesList }) => {
     localStorage.setItem("pagination", JSON.stringify(pagination));
   }, [pagination]);
 
-  // // Состояние загрузки
-  // useEffect(() => {
-  //   if (data && data.length > 0) {
-  //     setIsLoading(false);
-  //   } else {
-  //     setIsLoading(true);
-  //   }
-  // }, [data]);
+  // Состояние загрузки
+  useEffect(() => {
+    if (data && data.length > 0) {
+      setIsLoading(false);
+    } else {
+      setIsLoading(true);
+    }
+  }, [data]);
   //сброс данных в хранилище
   const resetState = () => {
     localStorage.removeItem("sorting");
@@ -115,96 +129,6 @@ const MaterialTable = ({ data, columns, citiesList }) => {
   const handleMenuClose = () => {
     setOpenListCSV(null);
   };
-  // // Вычисляем общую сумму возраста
-  // const totalAge = useMemo(() => {
-  //   return data.reduce((sum, row) => sum + (row.age || 0), 0);
-  // }, [data]);
-
-  // const columns = useMemo(
-  //   () => [
-  //     // {
-  //     //   header: "ID",
-  //     //   accessorKey: "id",
-
-  //     //   Header: <i style={{ color: "red" }}>ID </i>, // польз. header применяется без accessorFn, header и Header должны быть друг за другом
-  //     //   size: 80,
-  //     //   grow: false, //не разрешать этому столбцу увеличиваться (если layoutMode — это сетка)
-  //     // },
-  //     {
-  //       header: "Наименование товара",
-  //       accessorKey: "firstName",
-  //       size: 300,
-  //     },
-  //     {
-  //       // объединение данных в одну колонку
-  //       header: "Name",
-  //       accessorFn: (row) => `${row.firstName} ${row.lastName}`,
-  //     },
-  //     columnHelper.accessor("lastName", {
-  //       header: "Last Name",
-  //       size: 120,
-  //     }),
-  //     columnHelper.accessor("company", {
-  //       header: "Company",
-  //       size: 300,
-  //     }),
-  //     columnHelper.accessor("city", {
-  //       header: "City",
-  //       filterVariant: "multi-select", //или select - один вариант
-  //       filterSelectOptions: citiesList,
-  //     }),
-  //     columnHelper.accessor("country", {
-  //       header: "Country",
-  //       size: 220,
-  //       //enableColumnFilter: false,
-  //     }),
-  //     columnHelper.accessor("date", {
-  //       header: "Date",
-  //       filterVariant: "data-range",
-  //       //accessorFn: (row) => new Date(row.date),
-  //       //Cell: ({ cell }) => cell.getValue()?.toLocalDateString(),
-  //       size: 240,
-  //     }),
-  //     columnHelper.accessor("age", {
-  //       header: "Возраст",
-  //       size: 220,
-  //       aggregationFn: "count",
-  //       filterVariant: "data-range",
-  //       // Footer: () => <p>Общая сумма: {totalAge}</p>,
-  //     }),
-  //     {
-  //       header: "Salary",
-  //       accessorKey: "salary",
-  //       filterVariant: "data-range",
-  //       Cell: ({ cell }) => {
-  //         try {
-  //           const value = cell.getValue();
-  //           return (
-  //             <span>
-  //               $
-  //               {typeof value === "number"
-  //                 ? value.toLocaleString()
-  //                 : "нет данных"}
-  //             </span>
-  //           );
-  //         } catch (error) {
-  //           console.error("Ошибка:", error);
-  //           return <span>Нет данных</span>; // Отображаем сообщение об ошибке
-  //         }
-  //       },
-  //     },
-  //     {
-  //       header: "Интернет-магазин",
-  //       accessorFn: (originalRow) => (originalRow.isActive ? "true" : "false"),
-  //       id: "isActive",
-  //       filterVariant: "checkbox",
-  //       Cell: ({ cell }) =>
-  //         cell.getValue() === "true" ? "Active" : "Inactive",
-  //       size: 300,
-  //     },
-  //   ]
-  //   // [totalAge]
-  // );
 
   const theme = useTheme();
 
@@ -294,8 +218,13 @@ const MaterialTable = ({ data, columns, citiesList }) => {
     enableColumnFilters: true,
     localization: MRT_Localization_RU,
     enableGrouping: true,
+    // <!-- ручной режим
     manualGrouping: true,
-
+    manualPagination: true,
+    manualFiltering: true,
+    manualSorting: true,
+    //ручной режим --/>
+    rowCount: totalCount,
     enableColumnDragging: true, //перемещение колонок
     enableColumnOrdering: true,
     enableColumnPinning: true, //закрепление колонок
@@ -310,22 +239,27 @@ const MaterialTable = ({ data, columns, citiesList }) => {
     rowPinningDisplayMode: "select-sticky", //sticky' | 'top' | 'bottom' | 'top-and-bottom' | 'select-sticky' | 'select-top' | 'select-bottom'' - поведение строки при закреплении
     initialState: {
       density: "compact", //состояние пространства в строке: standart, spacious
-      pagination,
+
       columnVisibility: { lastName: false }, // при обновлении стр по ум скрываем колонку
       showColumnFilters: true,
       showGlobalFilter: false,
       //grouping: ["city"], // группировка по ум.
       columnPinning: { left: ["firstName"] }, //закрепление по ум.
     },
+
     onGlobalFilterChange: setGlobalFilter,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onPaginationChange: setPagination,
+
     state: {
       sorting,
       globalFilter,
       columnFilters,
-      pagination,
+      pagination: {
+        pageIndex: pagination.pageIndex,
+        pageSize: pagination.pageSize,
+      },
     },
     groupedColumnMode: "reorder",
     //     manualGrouping: true,
@@ -337,8 +271,10 @@ const MaterialTable = ({ data, columns, citiesList }) => {
     enableGlobalFilter: true,
     paginationDisplayMode: "pages",
     positionToolbarAlertBanner: "bottom",
+
     renderTopToolbarCustomActions: ({ table }) => (
       <>
+        {totalCount}
         <Box
           sx={{
             display: "flex",
@@ -389,6 +325,21 @@ const MaterialTable = ({ data, columns, citiesList }) => {
           </Tooltip>
         </Box>
 
+        {/* <div>
+          {Array.from(
+            { length: Math.ceil(totalCount / pagination.pageSize) },
+            (_, index) => (
+              <button
+                key={index}
+                onClick={() => handlePageChange(index)}
+                disabled={index === pagination.pageIndex}
+              >
+                {index + 1}
+              </button>
+            )
+          )}
+        </div> */}
+
         {/* <Box
           sx={{
             display: "flex",
@@ -429,6 +380,11 @@ const MaterialTable = ({ data, columns, citiesList }) => {
           </Button>
           
         </Box> */}
+        <Box sx={{ p: 1 }}>
+          <span>
+            Страница {pagination.pageIndex + 1} из {pageCount}
+          </span>
+        </Box>
       </>
     ),
   });

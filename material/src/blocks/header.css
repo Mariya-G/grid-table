@@ -1,16 +1,18 @@
 .header {
+  height: 60px;
+  padding: 0 20px;
+  box-sizing: border-box;
+  background-color: #fafafa;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  width: calc(100% - 40px);
-  margin: 0 auto 20px;
-  padding: 20px 0 0 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  border-bottom: 1px solid #d2d3d3;
+  z-index: 2;
 }
-.header__menu {
-  display: flex;
-  gap: 30px;
-  align-items: center;
-}
+
 .header__link-admin {
   background-color: #319ce8;
   color: #fff;
@@ -31,26 +33,67 @@
 .header__link-admin:hover {
   background-color: #5eace4;
 }
-.header__link {
-  color: #4a4a4a;
-  font-size: 16px;
+
+.header__button-open-menu {
+  background: url(../images/arrow-double.png) center center no-repeat;
+  width: 30px;
+  height: 30px;
+  transition: all 0.3s ease-in-out;
+  margin: 15px 20px 15px 0;
+  border: none;
+  cursor: pointer;
+  background-size: contain;
+}
+
+.header__button-open-menu:hover {
+  background: url(../images/arrow-double_hover.png) center center no-repeat;
+  background-size: contain;
+  width: 30px;
+  height: 30px;
+}
+
+.header__button-open-menu_close-sidebar {
+  transform: rotate(180deg);
+}
+.header__out-link {
   text-decoration: none;
+  display: flex;
+  align-items: center;
+  border: none;
+  border-left: 1px solid #d2d3d3;
+  padding: 0 0 0 20px;
+  box-sizing: border-box;
+  background: transparent;
+  cursor: pointer;
+}
+
+.header__out-link:hover .header__out-title {
+  color: #2b8ff9;
+}
+
+.header__out-title {
+  font-size: 14px;
+  color: #626262;
+  line-height: 16px;
+  font-weight: 400;
+  margin: 0 10px 0 0;
   transition: all 0.2s ease-in-out;
 }
-
-.header__link_active {
-  color: #319ce8;
+.header__out-link:hover .header__out-title {
+  color: #2b8ff9;
 }
-
-.header__link-out {
-  text-decoration: none;
-  color: #1976d2;
+.header__out-icon {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  background: url(../images/out.png) no-repeat center center;
+  background-size: contain;
+  transition: all 0.2s ease-in-out;
 }
-
-.header__link:hover {
-  color: #5eace4;
+.header__out-link:hover .header__out-icon {
+  background: url(../images/out-hover.png) no-repeat center center;
+  background-size: contain;
 }
-
 .css-wsew38 {
   -webkit-justify-content: end !important;
   justify-content: end !important;

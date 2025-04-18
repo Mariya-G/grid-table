@@ -1,55 +1,27 @@
-import { NavLink, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@mui/material";
 import { Logout } from "@mui/icons-material";
 import { useAuth } from "./AuthContext";
 
-function Header() {
+// eslint-disable-next-line react/prop-types
+function Header({ handleToggleSidebar, sidebarOpen }) {
   const { signOut } = useAuth();
   return (
     <div className="header">
-      <nav className="header__menu">
-        <Link to="#" className="header__link-admin">
-          Панель администратора
-        </Link>
-        <NavLink
-          to="/remains"
-          className={({ isActive }) =>
-            `header__link ${isActive ? "header__link_active" : ""}`
-          }
-        >
-          Остатки
-        </NavLink>
-        <NavLink
-          to="/sales"
-          className={({ isActive }) =>
-            `header__link ${isActive ? "header__link_active" : ""}`
-          }
-        >
-          Продажи
-        </NavLink>
-        <NavLink
-          to="/cards"
-          className={({ isActive }) =>
-            `header__link ${isActive ? "header__link_active" : ""}`
-          }
-        >
-          Карты
-        </NavLink>
-        <NavLink
-          to="/reports"
-          className={({ isActive }) =>
-            `header__link ${isActive ? "header__link_active" : ""}`
-          }
-        >
-          Отчеты
-        </NavLink>
-      </nav>
-
-      <Link className="header__link-out" onClick={signOut} to={"/login"}>
-        <Button variant="outlined" endIcon={<Logout />}>
-          Выйти
-        </Button>
-      </Link>
+      <div className="header-column header-column_left">
+        <button
+          className={`header__button-open-menu ${
+            !sidebarOpen ? "" : "header__button-open-menu_close-sidebar"
+          }`}
+          onClick={() => {
+            handleToggleSidebar();
+          }}
+        ></button>
+      </div>
+      <button className="header__out-link" onClick={signOut}>
+        <span className="header__out-title">Выйти</span>
+        <span className="header__out-icon"></span>
+      </button>
     </div>
   );
 }
